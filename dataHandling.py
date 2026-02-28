@@ -1,7 +1,27 @@
 import pandas as pd
 
-df = pd.read_csv(r'add file path here')
+df = pd.read_csv('Add file here')
 
+def extractData(column):
+    print(f"{column} - Mean: {df[column].mean()}, Min: {df[column].min()}, Max: {df[column].max()} \n")
+
+
+#Data on grades before filling in missing data
+extractData('grades_gpa')
+print(f"Number of missing values in 'grades_gpa': {df['grades_gpa'].isnull().sum()}")
+
+
+#Fills in missing data for grades_gpa with median of the column
+median_gpa = df['grades_gpa'].median()
+print(f"Median GPA: {median_gpa}")
+df.loc[(df['grades_gpa'].isnull()), 'grades_gpa'] = median_gpa
+
+
+#Data on grades after filling in missing data
+extractData('grades_gpa')
+print(f"Number of missing values in 'grades_gpa': {df['grades_gpa'].isnull().sum()}")
+
+#___________________Data Exploration___________________
 #prints first 5 rows
 print(df[:5])
 
@@ -11,26 +31,26 @@ print(df[:5])
 for column in df.columns:
     
     if df[column].isnull().sum() > 0:
-        print(f"Number of empty spaces in '{column}' column: \n {(df[column].isnull()).sum()}")
+        print(f"Number of empty spaces in '{column}' column: {df[column].isnull().sum()}")
     else:
         print(f"No empty spaces in '{column}' column")
     
 #Data on age
-print(f"{'age'} - Mean: {df['age'].mean()}, Min: {df['age'].min()}, Max: {df['age'].max()}")
+extractData('age')
 
 #data on gender
 for gender in df['gender'].unique():
     print(f"Number of people who are {gender}: {(df['gender'] == gender).sum()}")
 
-#There is 1000 people in the study, does not take into account those studying and working or those doing neither
-print(f"of these people, {df['grades_gpa'].notnull().sum()} are attending school and {df['work_productivity_score'].notnull().sum()} are working")
-
 #Data on gaming hours
-print(f"{'daily_gaming_hours'} - Mean: {df['daily_gaming_hours'].mean()}, Min: {df['daily_gaming_hours'].min()}, Max: {df['daily_gaming_hours'].max()}")
+extractData('daily_gaming_hours')
 
 #Data on sleep hours
-print(f"{'sleep_hours'} - Mean: {df['sleep_hours'].mean()}, Min: {df['sleep_hours'].min()}, Max: {df['sleep_hours'].max()}")
+extractData('sleep_hours')
 
 #data on genre
 for genre in df['game_genre'].unique():
     print(f"Number of people who play {genre}: {(df['game_genre'] == genre).sum()}")
+
+#Exporting cleaned data to a new csv file
+#df.to_csv('cleaned_mentalHealth.csv')
