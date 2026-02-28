@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv(r'C:\Users\yater\OneDrive\Documents\Stockton Stuff\Spring 2026\Knowledge Discovery and Data Mining\CSCI-4105DataMiningProject\CSCI-4105DataMiningProject\mentalHealth.csv')
+df = pd.read_csv(r'add file path here')
 
 #prints first 5 rows
 print(df[:5])
