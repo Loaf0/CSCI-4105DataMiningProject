@@ -3,7 +3,7 @@ from pandas.api.types import is_numeric_dtype, is_string_dtype
 
 #Read and drop the csv file, dropping the record_id column since it is not needed for analysis
 df = pd.read_csv(input("Please input file path of CSV:\n").strip(' "\''))
-df.drop(columns=['record_id'], inplace=True)
+#df.drop(columns=['record_id'], inplace=True)
 
 #Extracts basic statistics from numeric columns in the dataset
 def extractNumericData(column):
@@ -48,7 +48,7 @@ for column in df.columns:
 
 
 #Exporting cleaned data to a new csv file
-#df.to_csv('cleaned_mentalHealth.csv')
+df.to_csv('cleaned_mentalHealth.csv')
 
 #Examine possible value of gaming addiction risk level column
 print(df["gaming_addiction_risk_level"].unique())
