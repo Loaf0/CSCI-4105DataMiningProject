@@ -10,6 +10,7 @@ import pandas as pd
 
 from sklearn.ensemble import RandomForestClassifier
 
+#Load dataset
 df = pd.read_csv('mentalHealth.csv')
 
 # Convert categorical strings to numeric labels
@@ -17,11 +18,8 @@ le = LabelEncoder()
 for col in df.columns:
     df[col] = le.fit_transform(df[col])
 
-print(df.head())
-
 # Create dependent and independent variable
 Y=df["gaming_addiction_risk_level"]
-
 X = df[[
     "age",
     "gender",
@@ -50,53 +48,47 @@ X = df[[
     "years_gaming",
 ]]
 
+#We set up the training and testing data, w/ 80% training and 20% testing
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-# Setup Random Forest Classification
-"""
-n_estimators: how many decision tree
-min_sample_split: minimum data points required to split a node
-"""
+#Setup Random Forest Classification
 RF = RandomForestClassifier(criterion="gini", n_estimators=100, max_depth=3, random_state=42)
-
-# Apply to training data
 RF.fit(X_train, Y_train)
 
-# (Optional) label decision tree
+predY = RF.predict(X_test)
 
 # Plot some decision trees
 #Plot tree 1
 fig = plt.figure(figsize=(15, 5))
-tree.plot_tree(RF.estimators_[0], filled=True, impurity=True)
+tree.plot_tree(RF.estimators_[0], feature_names=X.columns, filled=True, impurity=True)
 plt.show()
+print(f'Accuracy on training data: {accuracy_score(Y_train, RF.predict(X_train))}')
 
 #Plot tree 2
 fig = plt.figure(figsize=(15, 5))
-tree.plot_tree(RF.estimators_[1], filled=True, impurity=True)
+tree.plot_tree(RF.estimators_[1], feature_names=X.columns, filled=True, impurity=True)
 plt.show()
 
+
 # Predict outcome of a random record
-print(RF.predict(X.iloc[[150]]))
-print(RF.predict(X.iloc[[50]]))
-print(RF.predict(X.iloc[[600]]))
+print("Predicted risk level for record for the following: ")
+print(f'Predicted risk level for record 150: {le.inverse_transform(RF.predict(X.iloc[[150]]))}')
+print(f'Predicted risk level for record 50: {le.inverse_transform(RF.predict(X.iloc[[50]]))}')
+print(f'Predicted risk level for record 600: {le.inverse_transform(RF.predict(X.iloc[[600]]))}')
 
-# Apply the classifier to test data
-Y_test = pd.DataFrame(Y_test)
-Y_test["Predicted"] = RF.predict(X_test)
-print(Y_test.head())
 
-#Confusion matrix on test data
-print(sorted(df["gaming_addiction_risk_level"].unique())) #Verify labels are mapped correctly
+#Confusion matrix on test data, changed df to Y_test
+print(f"Unique labels in test data: {le.inverse_transform(sorted(df['gaming_addiction_risk_level'].unique()))}") #Verify labels are mapped correctly
 
-ConfMatrix = ConfusionMatrixDisplay.from_predictions(Y_test["gaming_addiction_risk_level"], Y_test["Predicted"],
+CMatrix = ConfusionMatrixDisplay.from_predictions(Y_test, predY,
     labels=[0, 1, 2, 3], colorbar=False, display_labels=["High","Low","Moderate","Severe"]
 )
 plt.xlabel("Predicted")
 plt.ylabel("Actual")
-ax = ConfMatrix.ax_
+ax = CMatrix.ax_
 ax.xaxis.tick_top()
 ax.xaxis.set_label_position("top")
 plt.show()
 
 #Calculate metrics
-print("Accuracy: ", metrics.accuracy_score(Y_test["gaming_addiction_risk_level"], Y_test["Predicted"]))
+print("Accuracy on training data: ", accuracy_score(Y_test, predY))
