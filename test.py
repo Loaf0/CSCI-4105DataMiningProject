@@ -17,12 +17,13 @@ df = pd.read_csv("cleaned_mentalHealth.csv")
 filtered_df = apply_filters(df)
 
 # Tabs
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "Overview",
     "Behavior Analysis",
     "Social Impact",
     "Gaming Behavior",
-    "User Explorer"
+    "User Explorer",
+    "Decision Tree"
 ])
 
 
@@ -107,3 +108,19 @@ with tab5:
     else:
 
         st.warning("No users match the selected filters.")
+
+# Decision Tree
+
+with tab6:
+
+    st.header("Binary Decision Tree")
+
+    if "tree_mode" not in st.session_state:
+        st.session_state.tree_mode = "entropy"
+
+    if st.button("Entropy / Gini"):
+        st.session_state.tree_mode = "gini" if st.session_state.tree_mode == "entropy" else "entropy"
+
+    tree_depth = st.number_input("Max Depth", min_value=1, max_value=10, value=3, step=1)
+
+    binary_decision_tree(filtered_df, mode=st.session_state.tree_mode, tree_max_depth=int(tree_depth))
