@@ -4,10 +4,8 @@ from sklearn import tree
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
-from sklearn import metrics
-from sklearn.metrics import (accuracy_score, f1_score, ConfusionMatrixDisplay, recall_score)
+from sklearn.metrics import (accuracy_score, ConfusionMatrixDisplay)
 import pandas as pd
-
 from sklearn.ensemble import RandomForestClassifier
 
 #Load dataset
@@ -15,38 +13,14 @@ df = pd.read_csv('mentalHealth.csv')
 
 # Convert categorical strings to numeric labels
 le = LabelEncoder()
-for col in df.columns:
-    df[col] = le.fit_transform(df[col])
+for column in df.columns:
+    df[column] = le.fit_transform(df[column])
 
 # Create dependent and independent variable
 Y=df["gaming_addiction_risk_level"]
-X = df[[
-    "age",
-    "gender",
-    "daily_gaming_hours",
-    "game_genre",
-    "primary_game",
-    "gaming_platform",
-    "sleep_hours",
-    "sleep_quality",
-    "sleep_disruption_frequency",
-    "academic_work_performance",
-    "grades_gpa",
-    "work_productivity_score",
-    "mood_state",
-    "mood_swing_frequency",
-    "withdrawal_symptoms",
-    "loss_of_other_interests",
-    "continued_despite_problems",
-    "eye_strain",
-    "back_neck_pain",
-    "weight_change_kg",
-    "exercise_hours_weekly",
-    "social_isolation_score",
-    "face_to_face_social_hours_weekly",
-    "monthly_game_spending_usd",
-    "years_gaming",
-]]
+
+#Commented out some features as they are not necessary for the survey
+X = df.drop(columns=["gaming_addiction_risk_level", "record_id"])
 
 #We set up the training and testing data, w/ 80% training and 20% testing
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
@@ -91,4 +65,4 @@ ax.xaxis.set_label_position("top")
 plt.show()
 
 #Calculate metrics
-print("Accuracy on training data: ", accuracy_score(Y_test, predY))
+print("Accuracy on test data: ", accuracy_score(Y_test, predY))
