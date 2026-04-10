@@ -86,8 +86,7 @@ def predictionModel(trainingDF, surveyDF, previousUserDF = None):
 
     # Predict on the survey data
     surveyPrediction = RF.predict(surveyDF)
-    surveyDF['gaming_addiction_risk_level'] = le.inverse_transform(surveyPrediction)
-    print(f"Based on your responses, your predicted gaming addiction risk level is: {le.inverse_transform(surveyPrediction)[0]}")
+    print(f"Based on your responses, your predicted gaming addiction risk level is: {surveyPrediction[0]}")
 
     # load previous survey results if they exist and add the new responses and prediction to the previous results, then export to a new csv file
     if previousUserDF is not None:

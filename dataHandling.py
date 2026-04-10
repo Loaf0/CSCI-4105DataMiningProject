@@ -3,18 +3,18 @@ from pandas.api.types import is_numeric_dtype
 
 #Read and drop the csv file, dropping the record_id column since it is not needed for analysis
 df = pd.read_csv(input("Please input file path of CSV:\n").strip(' "\''))
-df.drop(columns=['record_id'], inplace=True)
 
+features = df.drop(columns=['record_id'], axis=1)
 #Extracts basic statistics from numeric columns in the dataset
 def extractNumericData(column):
-    print(f"{column} - Mean: {df[column].mean()}, Min: {df[column].min()}, Max: {df[column].max()} \n")
+    print(f"{column} - Mean: {features[column].mean()}, Min: {features[column].min()}, Max: {features[column].max()} \n")
 
 def extractStringData(column):
-    unique_values = df[column].dropna().unique().tolist()
+    unique_values = features[column].dropna().unique().tolist()
     print(f"{column} - Unique Values: {unique_values}")
 
     for value in unique_values:
-        count = (df[column] == value).sum()
+        count = (features[column] == value).sum()
         print(f"Number of people with {value} in {column} column: {count}")
     print()
 
@@ -40,8 +40,8 @@ df.loc[(df['grades_gpa'].isnull()), 'grades_gpa'] = median_gpa
 print(df[:5])
 
 #Extracts basic statistics from int columns in the dataset
-for column in df.columns:
-    if is_numeric_dtype(df[column]):
+for column in features.columns:
+    if is_numeric_dtype(features[column]):
         extractNumericData(column)
     else:
         extractStringData(column)
