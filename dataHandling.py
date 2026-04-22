@@ -4,7 +4,7 @@ from pandas.api.types import is_numeric_dtype
 #Read and drop the csv file, dropping the record_id column since it is not needed for analysis
 df = pd.read_csv(input("Please input file path of CSV:\n").strip(' "\''))
 
-features = df.drop(columns=['record_id'], axis=1)
+features = df.drop(columns=['record_id'])
 #Extracts basic statistics from numeric columns in the dataset
 def extractNumericData(column):
     print(f"{column} - Mean: {features[column].mean()}, Min: {features[column].min()}, Max: {features[column].max()} \n")

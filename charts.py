@@ -13,7 +13,7 @@ def binary_decision_tree(df, mode = 'entropy', tree_max_depth = 3):
     data['at_risk'] = data['gaming_addiction_risk_level'].isin(['High', 'Severe'])
     
     # remove unnecessary columns
-    features = data.drop(columns=['gaming_addiction_risk_level', 'at_risk'], axis=1)
+    features = data.drop(columns=['gaming_addiction_risk_level', 'at_risk'])
     features = features.drop(columns=['record_id'])
 
     # convert features into numbers
