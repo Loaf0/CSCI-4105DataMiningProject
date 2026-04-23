@@ -29,16 +29,16 @@ def format_ai_advice_prompt(servey_responses : str):
     weights = """
         Here are the feature importance weights with their average values from the model (higher means more important):
             Column                              Weight      Average Value
-            daily_gaming_hours                  0.360845    6.1514
-            loss_of_other_interests             0.136124    0.325
-            withdrawal_symptoms                 0.132598    0.289
-            back_neck_pain                      0.080239    0.349
-            face_to_face_social_hours_weekly    0.060720    5.3520
-            monthly_game_spending_usd           0.060384    160.17
-            social_isolation_score              0.049419    5.1724
-            continued_despite_problems          0.043612    0.140
-            sleep_hours                         0.036417    5.7381
-            exercise_hours_weekly               0.014173    6.9459
+            daily_gaming_hours                  0.280523    6.1514
+            loss_of_other_interests             0.155561    0.325
+            withdrawal_symptoms                 0.126649    0.289
+            face_to_face_social_hours_weekly    0.109305    0.349
+            social_isolation_score              0.092586    5.3520
+            back_neck_pain                      0.051332    160.17
+            continued_despite_problems          0.045477    5.1724
+            sleep_hours                         0.043355    0.140
+            monthly_game_spending_usd           0.042381    5.7381
+            exercise_hours_weekly               0.014825     6.9459
     """
 
     final_request = """
