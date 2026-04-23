@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+from ai_implementation_test import get_ai_advice
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, recall_score
 from sklearn.model_selection import train_test_split
@@ -273,6 +274,17 @@ def build_recommendations(prediction, survey_df):
 
     return unique_recommendations[:4]
 
+def format_survey_for_ai(survey_df):
+    row = survey_df.iloc[0]
+    lines = []
+
+    for field in FEATURE_COLUMNS:
+        value = row[field]
+        lines.append(f"{field}: {value}")
+
+    return "\n".join(lines)
+
+
 
 st.markdown(
     """
@@ -331,6 +343,24 @@ if submitted:
     probability = float(max(model.predict_proba(survey_df)[0]))
     reasons = explain_prediction(model, survey_df)
     recommendations = build_recommendations(prediction, survey_df)
+    st.session_state["latest_result"] = {
+        "survey_df": survey_df.copy(),
+        "prediction": prediction,
+        "probability": probability,
+        "reasons": reasons,
+        "recommendations": recommendations,
+    }
+    st.session_state["ai_life_recommendations"] = ""
+
+
+latest_result = st.session_state.get("latest_result")
+
+if latest_result:
+    survey_df = latest_result["survey_df"]
+    prediction = latest_result["prediction"]
+    probability = latest_result["probability"]
+    reasons = latest_result["reasons"]
+    recommendations = latest_result["recommendations"]
 
     st.markdown(
         f"""
@@ -357,6 +387,20 @@ if submitted:
         st.subheader("Recommendations")
         for item in recommendations:
             st.write(f"- {item}")
+
+    st.subheader("Recommened Life Changes")
+    if st.button("Get Recommened Life Changes", key="get_ai_life_recommendations"):
+        with st.spinner("Getting Life Recommendations..."):
+            try:
+                survey_summary = format_survey_for_ai(survey_df)
+                st.session_state["ai_life_recommendations"] = get_ai_advice(survey_summary)
+            except Exception:
+                st.session_state["ai_life_recommendations"] = ""
+                st.error("Our serivce is currently down. Please try again later.")
+
+    ai_recommendations = st.session_state.get("ai_life_recommendations", "")
+    if ai_recommendations:
+        st.write(ai_recommendations)
 
     st.subheader("Your Answers")
     display_df = survey_df.copy()

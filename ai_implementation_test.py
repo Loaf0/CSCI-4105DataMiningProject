@@ -25,7 +25,7 @@ def prompt_ai(prompt: str, model: str = MODEL, temperature: float = 0.5, max_tok
 
     return response.choices[0].message.content or ""
 
-def format_ai_advice_prompt(servey_responses : str):
+def format_ai_advice_prompt(survey_responses : str):
     weights = """
         Here are the feature importance weights with their average values from the model (higher means more important):
             Column                              Weight      Average Value
@@ -57,14 +57,15 @@ def format_ai_advice_prompt(servey_responses : str):
     
     """
 
-    return weights + "\n\n" "User's survey responses:\n" + servey_responses + "\n\n" + final_request
+    return weights + "\n\n" "User's survey responses:\n" + survey_responses + "\n\n" + final_request
 
 
-def get_ai_advice(servey_responses: str) -> str:
-    return prompt_ai(format_ai_advice_prompt(servey_responses))
+def get_ai_advice(survey_responses: str) -> str:
+    return prompt_ai(format_ai_advice_prompt(survey_responses))
 
-test_survey_responses = """
-daily_gaming_hours,loss_of_other_interests,withdrawal_symptoms,back_neck_pain,face_to_face_social_hours_weekly,monthly_game_spending_usd,social_isolation_score,continued_despite_problems,sleep_hours,exercise_hours_weekly
-6.0,False,True,False,6.0,60.0,4.0,True,6.0,4.0
-"""
-print(get_ai_advice(test_survey_responses))
+
+# test_survey_responses = """
+# daily_gaming_hours,loss_of_other_interests,withdrawal_symptoms,back_neck_pain,face_to_face_social_hours_weekly,monthly_game_spending_usd,social_isolation_score,continued_despite_problems,sleep_hours,exercise_hours_weekly
+# 6.0,False,True,False,6.0,60.0,4.0,True,6.0,4.0
+# """
+# print(get_ai_advice(test_survey_responses))
