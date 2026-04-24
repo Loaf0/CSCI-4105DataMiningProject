@@ -84,14 +84,15 @@ survey_question_items = [
 filtered_df = apply_filters(df)
 
 # Tabs
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "Overview",
     "Behavior Analysis",
     "Social Impact",
     "Gaming Behavior",
     "User Explorer",
     "Decision Tree",
-    "Survey"
+    "Survey",
+    "Clustering"
 ])
 
 
@@ -290,3 +291,11 @@ with tab7:
     if submitted:
         st.success("Survey answers captured successfully.")
         st.dataframe(pd.DataFrame(responses), use_container_width=True, hide_index=True)
+
+
+    # Clustering
+
+    with tab8:
+
+        st.header("K-Means Clustering")
+        clustering_result(filtered_df)
