@@ -235,45 +235,6 @@ def explain_prediction(model, survey_df):
     return [item[1] for item in reasons[:3]]
 
 
-def build_recommendations(prediction, survey_df):
-    daily_hours = survey_df.iloc[0]["daily_gaming_hours"]
-    sleep_hours = survey_df.iloc[0]["sleep_hours"]
-    social_hours = survey_df.iloc[0]["face_to_face_social_hours_weekly"]
-    exercise_hours = survey_df.iloc[0]["exercise_hours_weekly"]
-
-    recommendations = []
-
-    if prediction == "High":
-        recommendations.append("Set a strict daily play limit and take regular offline breaks.")
-        recommendations.append("Protect sleep by stopping gaming at least 1 hour before bed.")
-        recommendations.append("Talk with a trusted person or mental health professional if gaming feels hard to control.")
-    elif prediction == "Moderate":
-        recommendations.append("Reduce play time gradually and keep a daily routine with fixed stop times.")
-        recommendations.append("Increase offline activities such as exercise, hobbies, or social time.")
-        recommendations.append("Watch for warning signs like poor sleep, withdrawal, or rising isolation.")
-    else:
-        recommendations.append("Keep a balanced routine and monitor gaming time so it stays under control.")
-        recommendations.append("Maintain healthy sleep, exercise, and social habits.")
-        recommendations.append("Recheck your habits if gaming time or stress starts to increase.")
-
-    if daily_hours >= 6:
-        recommendations.append("Try to cap long gaming sessions before they affect your daily energy and focus.")
-    if sleep_hours < 7:
-        recommendations.append("Aim for a more consistent sleep schedule to help your recovery and concentration.")
-    if social_hours < 7:
-        recommendations.append("Add at least one offline social activity into your weekly schedule.")
-    if exercise_hours < 3:
-        recommendations.append("Add light physical activity during the week to support mood and sleep.")
-
-    seen = set()
-    unique_recommendations = []
-    for item in recommendations:
-        if item not in seen:
-            seen.add(item)
-            unique_recommendations.append(item)
-
-    return unique_recommendations[:4]
-
 def format_survey_for_ai(survey_df):
     row = survey_df.iloc[0]
     lines = []
@@ -342,13 +303,11 @@ if submitted:
     prediction = model.predict(survey_df)[0]
     probability = float(max(model.predict_proba(survey_df)[0]))
     reasons = explain_prediction(model, survey_df)
-    recommendations = build_recommendations(prediction, survey_df)
     st.session_state["latest_result"] = {
         "survey_df": survey_df.copy(),
         "prediction": prediction,
         "probability": probability,
         "reasons": reasons,
-        "recommendations": recommendations,
     }
     st.session_state["ai_life_recommendations"] = ""
 
@@ -360,7 +319,6 @@ if latest_result:
     prediction = latest_result["prediction"]
     probability = latest_result["probability"]
     reasons = latest_result["reasons"]
-    recommendations = latest_result["recommendations"]
 
     st.markdown(
         f"""
@@ -384,23 +342,33 @@ if latest_result:
             st.write("- Your answers do not show a strong risk signal in the model.")
 
     with right_col:
-        st.subheader("Recommendations")
-        for item in recommendations:
-            st.write(f"- {item}")
+        st.subheader("AI Generated Recommendations")
+        st.markdown(
+            """
+            <div style="background:linear-gradient(135deg, #0f172a, #1f2937);color:white;padding:1rem 1.15rem;border-radius:16px;box-shadow:0 12px 24px rgba(15,23,42,0.12);">
+            """,
+            unsafe_allow_html=True,
+        )
+        button_col, output_col = st.columns([1, 1.45], gap="medium")
 
-    st.subheader("Recommened Life Changes")
-    if st.button("Get Recommened Life Changes", key="get_ai_life_recommendations"):
-        with st.spinner("Getting Life Recommendations..."):
-            try:
-                survey_summary = format_survey_for_ai(survey_df)
-                st.session_state["ai_life_recommendations"] = get_ai_advice(survey_summary)
-            except Exception:
-                st.session_state["ai_life_recommendations"] = ""
-                st.error("Our serivce is currently down. Please try again later.")
+        with button_col:
+            if st.button("Get Recommened Life Changes", key="get_ai_life_recommendations", use_container_width=True):
+                with st.spinner("Getting Life Recommendations..."):
+                    try:
+                        survey_summary = format_survey_for_ai(survey_df)
+                        st.session_state["ai_life_recommendations"] = get_ai_advice(survey_summary)
+                    except Exception:
+                        st.session_state["ai_life_recommendations"] = ""
+                        st.error("Our serivce is currently down. Please try again later.")
 
-    ai_recommendations = st.session_state.get("ai_life_recommendations", "")
-    if ai_recommendations:
-        st.write(ai_recommendations)
+        with output_col:
+            ai_recommendations = st.session_state.get("ai_life_recommendations", "")
+            if ai_recommendations:
+                st.write(ai_recommendations)
+            else:
+                st.info("Generate AI recommendations for this survey using the button on the left.")
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.subheader("Your Answers")
     display_df = survey_df.copy()
