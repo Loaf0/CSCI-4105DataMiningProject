@@ -17,8 +17,8 @@ def render_clustering_kpi_cards(summary):
 
 
 def render_cluster_profile_table(summary):
-    st.subheader("Cluster Profile Comparison Table")
-    st.caption("Compares average metrics and risk levels across clusters.")
+    st.subheader("Cluster Profile Table")
+    st.caption("This table compares the main values for each cluster.")
     st.dataframe(summary["cluster_profile_table"], use_container_width=True)
 
 
@@ -58,19 +58,12 @@ def build_key_cluster_insights(summary):
 def render_key_cluster_insights_panel(summary):
     insights = build_key_cluster_insights(summary)
 
-    st.subheader("Key Cluster Insights Panel")
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, #0f172a, #1f2937);color:white;padding:1.1rem 1.2rem;border-radius:18px;box-shadow:0 14px 30px rgba(15,23,42,0.14);">
-            <div style="font-size:0.92rem;opacity:0.8;margin-bottom:0.55rem;">Auto-generated insights from the cluster comparison table</div>
-            <ul style="margin:0;padding-left:1.15rem;line-height:1.75;">
-                {''.join(f'<li>{insight}</li>' for insight in insights)}
-            </ul>
-            <div style="margin-top:0.75rem;font-size:0.82rem;opacity:0.75;">These findings translate cluster metrics into understandable takeaways about gaming intensity, sleep loss, and risk concentration.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.subheader("Key Cluster Insights")
+    st.info("These insights are made from the cluster comparison table.")
+    for insight in insights:
+        st.write(f"- {insight}")
+
+    st.caption("The goal is to make the cluster results easier to understand at a glance.")
 
 
 def render_cluster_size_distribution(summary):
@@ -79,7 +72,7 @@ def render_cluster_size_distribution(summary):
     colors = ["#2563eb", "#0f766e", "#f59e0b", "#7c3aed", "#ef4444"]
 
     fig, ax = plt.subplots(figsize=(7.8, 4.8))
-    bars = list(ax.bar(cluster_names, cluster_counts.values, color=[colors[index % len(colors)] for index in range(len(cluster_names))]))
+    bars = ax.bar(cluster_names, cluster_counts.values, color=[colors[index % len(colors)] for index in range(len(cluster_names))])
     ax.set_title("Cluster Size Distribution", fontsize=13, pad=12)
     ax.set_xlabel("Cluster")
     ax.set_ylabel("Users")
@@ -89,7 +82,7 @@ def render_cluster_size_distribution(summary):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5, str(int(value)), ha="center", va="bottom", fontsize=9)
 
     st.subheader("Cluster Size Distribution")
-    st.caption("Bar chart showing the number of users in each cluster.")
+    st.caption("This bar chart shows how many users are in each cluster.")
     st.pyplot(fig)
 
 
@@ -141,12 +134,13 @@ def render_cluster_risk_overlay(summary):
     ax.legend(frameon=False, ncol=4, loc="upper center", bbox_to_anchor=(0.5, 1.18))
 
     st.subheader("Cluster Risk Overlay")
-    st.caption("Shows how addiction risk labels are distributed inside each cluster.")
+    st.caption("This chart shows the risk mix inside each cluster.")
     st.pyplot(fig)
 
 
 def render_clustering_tab(filtered_df):
     st.header("K-Means Clustering")
+    st.caption("This tab groups similar users into clusters and compares their patterns.")
 
     summary = build_clustering_summary(filtered_df)
     if summary is None:

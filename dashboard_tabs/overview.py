@@ -32,6 +32,7 @@ def render_risk_factor_chart(dataframe):
 
 def render_overview_tab(filtered_df):
     st.header("Dataset Overview")
+    st.caption("This tab gives a quick summary of the dataset and the main risk patterns.")
 
     col1, col2, col3, col4, col5 = st.columns(5)
 
@@ -59,7 +60,7 @@ def render_overview_tab(filtered_df):
             st.markdown("#### Risk Level Distribution")
             addiction_distribution(filtered_df)
 
-    st.markdown("#### Key Insights")
+    st.subheader("Key Insights")
     insight_prompt = build_overview_insight_prompt(filtered_df)
     with st.spinner("Generating overview insights..."):
         try:
@@ -72,15 +73,8 @@ def render_overview_tab(filtered_df):
                 "- Severe-risk users should be prioritized for support and monitoring."
             )
 
-    st.markdown(
-        f"""
-        <div style="background:#0f172a;color:white;padding:1rem 1.15rem;border-radius:18px;min-height:220px;box-shadow:0 14px 30px rgba(15,23,42,0.14);">
-            <div style="font-size:0.92rem;opacity:0.8;margin-bottom:0.5rem;">OpenAI-generated summary</div>
-            <div style="line-height:1.65;font-size:1rem;white-space:pre-line;">{insights_text}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.info("OpenAI-generated summary")
+    st.write(insights_text)
 
     st.subheader("Model Performance")
     overview_metrics = train_overview_model()

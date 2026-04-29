@@ -11,24 +11,24 @@ GENRE_ORDER = ["MOBA", "FPS", "RPG", "Battle Royale", "MMO", "Strategy"]
 PLATFORM_ORDER = ["PC", "Console", "Mobile", "Multi-platform"]
 
 
+def _safe_mean(dataframe, column):
+    if column not in dataframe.columns:
+        return 0.0
+
+    values = pd.to_numeric(dataframe[column], errors="coerce").fillna(0)
+    return float(values.mean())
+
+
 def build_behavior_summary(dataframe):
     daily_hours = pd.to_numeric(dataframe["daily_gaming_hours"], errors="coerce").fillna(0)
 
-    sleep_disruption = (
-        dataframe["sleep_disruption_frequency"].map(frequency_to_score).mean()
-        if "sleep_disruption_frequency" in dataframe.columns
-        else 0.0
-    )
-    mood_swing = (
-        dataframe["mood_swing_frequency"].map(frequency_to_score).mean()
-        if "mood_swing_frequency" in dataframe.columns
-        else 0.0
-    )
-
     avg_daily_hours = float(daily_hours.mean())
-    spike_factor = min(0.35, 0.08 + (sleep_disruption * 0.03) + (mood_swing * 0.02))
-    weekday_avg = avg_daily_hours * (1.0 - spike_factor)
-    weekend_avg = avg_daily_hours * (1.0 + spike_factor * 1.8)
+    sleep_disruption = _safe_mean(dataframe, "sleep_disruption_frequency")
+    mood_swing = _safe_mean(dataframe, "mood_swing_frequency")
+
+    weekend_factor = min(0.35, 0.08 + (sleep_disruption * 0.03) + (mood_swing * 0.02))
+    weekday_avg = avg_daily_hours * (1.0 - weekend_factor)
+    weekend_avg = avg_daily_hours * (1.0 + weekend_factor * 1.8)
     weekend_increase = ((weekend_avg - weekday_avg) / max(weekday_avg, 0.1)) * 100.0
     heavy_gamers_count = int((daily_hours > 8).sum())
     heavy_gamers_pct = (heavy_gamers_count / len(dataframe)) * 100 if len(dataframe) else 0.0
@@ -45,7 +45,7 @@ def build_behavior_summary(dataframe):
 
 def render_time_type_chart(dataframe, summary):
     fig, ax = plt.subplots(figsize=(7.5, 4.8))
-    labels = ["Weekdays Avg Hours", "Weekends Avg Hours"]
+    labels = ["Weekdays", "Weekends"]
     values = [summary["weekday_avg"], summary["weekend_avg"]]
     bars = ax.bar(labels, values, color=["#2563eb", "#f59e0b"], width=0.55)
 
@@ -87,10 +87,7 @@ def render_genre_chart(dataframe):
 
 def render_platform_donut(dataframe):
     counts = dataframe["gaming_platform"].value_counts().reindex(PLATFORM_ORDER, fill_value=0)
-    colors = ["#2563eb", # PC
-              "#f59e0b", # Console
-              "#10b981", # Mobile
-              "#7c3aed"] # Multi-platform
+    colors = ["#2563eb", "#f59e0b", "#10b981", "#7c3aed"]
 
     fig, ax = plt.subplots(figsize=(6.6, 4.3))
     wedges, _, autotexts = ax.pie(
@@ -116,33 +113,24 @@ def render_platform_donut(dataframe):
 def build_behavior_insights(dataframe, summary):
     insights = []
 
-    weekend_increase = summary["weekend_increase"]
-    insights.append(f"Weekend gaming increases by {weekend_increase:.0f}% compared with weekdays.")
+    insights.append(f"Weekend gaming increases by {summary['weekend_increase']:.0f}% compared with weekdays.")
 
-    genre_means = (
-        dataframe.groupby("game_genre")["daily_gaming_hours"].mean().reindex(GENRE_ORDER).dropna()
-        if "game_genre" in dataframe.columns
-        else pd.Series(dtype=float)
-    )
-    if not genre_means.empty:
-        top_genre = genre_means.idxmax()
-        top_genre_hours = genre_means.max()
-        insights.append(f"{top_genre} players average the longest sessions at {top_genre_hours:.1f} hours per day.")
+    if "game_genre" in dataframe.columns:
+        genre_means = dataframe.groupby("game_genre")["daily_gaming_hours"].mean().reindex(GENRE_ORDER).dropna()
+        if not genre_means.empty:
+            top_genre = genre_means.idxmax()
+            insights.append(f"{top_genre} players average the longest sessions at {genre_means.max():.1f} hours per day.")
 
     heavy_gamers = dataframe[pd.to_numeric(dataframe["daily_gaming_hours"], errors="coerce").fillna(0) > 8]
     if len(heavy_gamers) > 0:
         lowest_sleep = pd.to_numeric(heavy_gamers["sleep_hours"], errors="coerce").fillna(0).mean()
         insights.append(f"Users gaming >8h/day report the lowest average sleep at {lowest_sleep:.1f} hours.")
 
-    platform_means = (
-        dataframe.groupby("gaming_platform")["daily_gaming_hours"].mean().reindex(PLATFORM_ORDER).dropna()
-        if "gaming_platform" in dataframe.columns
-        else pd.Series(dtype=float)
-    )
-    if not platform_means.empty:
-        top_platform = platform_means.idxmax()
-        top_platform_hours = platform_means.max()
-        insights.append(f"{top_platform} gamers show the highest session frequency proxy at {top_platform_hours:.1f} hours per day.")
+    if "gaming_platform" in dataframe.columns:
+        platform_means = dataframe.groupby("gaming_platform")["daily_gaming_hours"].mean().reindex(PLATFORM_ORDER).dropna()
+        if not platform_means.empty:
+            top_platform = platform_means.idxmax()
+            insights.append(f"{top_platform} gamers show the highest session frequency proxy at {platform_means.max():.1f} hours per day.")
 
     return insights[:4]
 
@@ -151,25 +139,16 @@ def render_behavior_insights_panel(dataframe, summary):
     insights = build_behavior_insights(dataframe, summary)
 
     st.subheader("Key Behavioral Insights")
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, #0f172a, #1f2937);color:white;padding:1.1rem 1.2rem;border-radius:18px;box-shadow:0 14px 30px rgba(15,23,42,0.14);">
-            <div style="font-size:0.92rem;opacity:0.8;margin-bottom:0.55rem;">Auto-generated findings from the current filters</div>
-            <ul style="margin:0;padding-left:1.15rem;line-height:1.75;">
-                {''.join(f'<li>{insight}</li>' for insight in insights)}
-            </ul>
-            <div style="margin-top:0.75rem;font-size:0.82rem;opacity:0.75;">Insights are derived from daily gaming hours, genre averages, sleep hours, and platform patterns.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.info("Auto-generated findings from the current filters")
+    for insight in insights:
+        st.write(f"- {insight}")
+
+    st.caption("Insights are based on daily gaming hours, genre averages, sleep hours, and platform patterns.")
 
 
 def render_behavior_tab(filtered_df):
     st.header("Behavior Analysis")
-    st.caption(
-        "Gaming pattern values are estimated from available behavior signals because the dataset does not include a direct weekday/weekend column."
-    )
+    st.caption("Weekday and weekend values are estimated from the behavior signals in the dataset.")
 
     if len(filtered_df) == 0:
         st.warning("No users match the selected filters.")
@@ -188,9 +167,7 @@ def render_behavior_tab(filtered_df):
         f"{summary['heavy_gamers_pct']:.1f}% of users",
     )
 
-    st.caption(
-        f"Estimated example: Weekday = {summary['weekday_avg']:.1f}h | Weekend = {summary['weekend_avg']:.1f}h"
-    )
+    st.caption(f"Example estimate: Weekday = {summary['weekday_avg']:.1f}h | Weekend = {summary['weekend_avg']:.1f}h")
 
     with st.container(border=True):
         render_time_type_chart(filtered_df, summary)

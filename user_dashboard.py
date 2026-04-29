@@ -246,49 +246,72 @@ def format_survey_for_ai(survey_df):
     return "\n".join(lines)
 
 
+def _survey_value(survey_df, field):
+    value = survey_df.iloc[0][field]
+    if pd.isna(value):
+        return 0.0
+    return float(value)
 
-st.markdown(
-    """
-    <style>
-    .user-hero {
-        background: linear-gradient(135deg, #112233, #2d4a66);
-        color: white;
-        padding: 1.4rem 1.5rem;
-        border-radius: 20px;
-        margin-bottom: 1rem;
-        box-shadow: 0 16px 40px rgba(10, 20, 35, 0.22);
-    }
-    .user-hero h2 {
-        margin: 0 0 0.35rem 0;
-        font-size: 1.7rem;
-    }
-    .user-hero p {
-        margin: 0;
-        opacity: 0.92;
-        line-height: 1.5;
-    }
-    .question-card {
-        background: #ffffff;
-        border: 1px solid #e6e8ee;
-        border-radius: 16px;
-        padding: 1rem 1rem 0.85rem 1rem;
-        margin-bottom: 0.85rem;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
-    }
-    .question-card p {
-        margin: 0 0 0.75rem 0;
-        font-weight: 600;
-        color: #1f2937;
-        line-height: 1.45;
-    }
-    </style>
-    <div class="user-hero">
-        <h2>Gaming Addiction Survey</h2>
-        <p>Answer the questions below to receive your predicted risk level, a short reason, and practical recommendations.</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+
+def build_prediction_reason_bullets(survey_df, prediction):
+    daily_hours = _survey_value(survey_df, "daily_gaming_hours")
+    sleep_hours = _survey_value(survey_df, "sleep_hours")
+    exercise_hours = _survey_value(survey_df, "exercise_hours_weekly")
+    social_hours = _survey_value(survey_df, "face_to_face_social_hours_weekly")
+    isolation_score = _survey_value(survey_df, "social_isolation_score")
+    monthly_spending = _survey_value(survey_df, "monthly_game_spending_usd")
+
+    withdrawal = int(_survey_value(survey_df, "withdrawal_symptoms"))
+    continued_problems = int(_survey_value(survey_df, "continued_despite_problems"))
+    loss_of_interest = int(_survey_value(survey_df, "loss_of_other_interests"))
+    back_neck_pain = int(_survey_value(survey_df, "back_neck_pain"))
+
+    bullets = []
+
+    if prediction in {"High", "Severe"}:
+        if withdrawal == 1:
+            bullets.append("Withdrawal symptoms suggest gaming may be hard to control.")
+        if continued_problems == 1:
+            bullets.append("Continuing despite problems suggests gaming is affecting daily life.")
+        if sleep_hours < 7:
+            bullets.append(f"Sleeping {sleep_hours:.1f} hours may leave less energy to manage gaming.")
+        if daily_hours >= 5:
+            bullets.append(f"Gaming {daily_hours:.1f} hours daily can crowd out other routines.")
+        if isolation_score >= 7:
+            bullets.append(f"An isolation score of {isolation_score:.1f}/10 may increase gaming dependence.")
+    else:
+        if sleep_hours >= 7:
+            bullets.append(f"Sleeping {sleep_hours:.1f} hours suggests gaming is not strongly disrupting rest.")
+        if exercise_hours >= 3:
+            bullets.append(f"Exercising {exercise_hours:.1f} hours weekly shows some healthy offline balance.")
+        if social_hours >= 10:
+            bullets.append(f"Spending {social_hours:.1f} social hours weekly may lower isolation-related risk.")
+        if daily_hours < 5:
+            bullets.append(f"Gaming {daily_hours:.1f} hours daily leaves room for other activities.")
+        if isolation_score < 7:
+            bullets.append(f"An isolation score of {isolation_score:.1f}/10 may reduce addiction pressure.")
+
+    if loss_of_interest == 1:
+        bullets.append("Losing interest in other activities can weaken balance outside gaming.")
+    elif back_neck_pain == 1:
+        bullets.append("Back or neck pain suggests gaming is affecting physical comfort.")
+    else:
+        bullets.append("Keeping interest in other activities supports healthier balance.")
+
+    if monthly_spending <= 30:
+        bullets.append(f"Monthly spending of ${monthly_spending:.0f} may reflect more controlled gaming habits.")
+    else:
+        bullets.append(f"Monthly spending of ${monthly_spending:.0f} can add pressure to keep gaming active.")
+
+    if len(bullets) < 3:
+        bullets.append("The survey answers show a mixed balance of gaming and offline habits.")
+
+    return bullets[:3]
+
+
+
+st.title("Gaming Addiction Survey")
+st.caption("Answer the questions below to see your risk level, a short explanation, and recommendations.")
 
 model, metrics = train_model()
 
@@ -318,37 +341,25 @@ if latest_result:
     survey_df = latest_result["survey_df"]
     prediction = latest_result["prediction"]
     probability = latest_result["probability"]
-    reasons = latest_result["reasons"]
+    reasons = build_prediction_reason_bullets(survey_df, prediction)
 
-    st.markdown(
-        f"""
-        <div style="background:#0f172a;color:white;padding:1rem 1.2rem;border-radius:16px;margin-bottom:1rem;">
-            <div style="font-size:0.9rem;opacity:0.85;">Predicted risk level</div>
-            <div style="font-size:1.8rem;font-weight:700;">{prediction}</div>
-            <div style="font-size:0.95rem;opacity:0.9;">Model confidence: {probability:.0%}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.subheader("Predicted Risk Level")
+    st.info(f"{prediction} risk | Confidence: {probability:.0%}")
 
     left_col, right_col = st.columns(2)
 
     with left_col:
-        st.subheader("Reason")
+        st.subheader("Why This Prediction")
         if reasons:
             for item in reasons:
                 st.write(f"- {item}")
         else:
-            st.write("- Your answers do not show a strong risk signal in the model.")
+            st.write("- Sleeping 0.0 hours may leave less energy to manage gaming.")
+            st.write("- Gaming 0.0 hours daily leaves room for other activities.")
+            st.write("- An isolation score of 0.0/10 may reduce addiction pressure.")
 
     with right_col:
         st.subheader("AI Generated Recommendations")
-        st.markdown(
-            """
-            <div style="background:linear-gradient(135deg, #0f172a, #1f2937);color:white;padding:1rem 1.15rem;border-radius:16px;box-shadow:0 12px 24px rgba(15,23,42,0.12);">
-            """,
-            unsafe_allow_html=True,
-        )
         button_col, output_col = st.columns([1, 1.45], gap="medium")
 
         with button_col:
@@ -367,8 +378,6 @@ if latest_result:
                 st.write(ai_recommendations)
             else:
                 st.info("Generate AI recommendations for this survey using the button on the left.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
 
     st.subheader("Your Answers")
     display_df = survey_df.copy()

@@ -106,20 +106,20 @@ def train_global_model():
 
 
 def build_prediction_features(row):
-    features = row[
-        [
-            "daily_gaming_hours",
-            "loss_of_other_interests",
-            "withdrawal_symptoms",
-            "back_neck_pain",
-            "face_to_face_social_hours_weekly",
-            "monthly_game_spending_usd",
-            "social_isolation_score",
-            "continued_despite_problems",
-            "sleep_hours",
-            "exercise_hours_weekly",
-        ]
-    ].copy()
+    feature_columns = [
+        "daily_gaming_hours",
+        "loss_of_other_interests",
+        "withdrawal_symptoms",
+        "back_neck_pain",
+        "face_to_face_social_hours_weekly",
+        "monthly_game_spending_usd",
+        "social_isolation_score",
+        "continued_despite_problems",
+        "sleep_hours",
+        "exercise_hours_weekly",
+    ]
+
+    features = row[feature_columns].copy()
 
     for column in features.index:
         if column in FEATURE_BINARY_COLUMNS:
@@ -147,6 +147,16 @@ def _format_explanation_value(feature_name, raw_value):
     if feature_meta.get("binary"):
         return "Yes" if int(raw_value) == 1 else "No"
     return f"{float(raw_value):.1f}"
+
+
+def _simple_user_summary(prediction):
+    if prediction == "Severe":
+        return "This user has a very high risk level and may need support soon."
+    if prediction == "High":
+        return "This user has a high risk level and should be watched closely."
+    if prediction == "Moderate":
+        return "This user has some warning signs but is not in the highest group."
+    return "This user is currently in the lower risk group."
 
 
 def build_user_explanation(record_row, model, feature_frame):
@@ -192,18 +202,11 @@ def render_explainable_ai_panel(record_row, model, prediction_frame):
     contributions = build_user_explanation(record_row, model, prediction_frame)
 
     st.subheader("Explainable AI Panel")
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, #111827, #1f2937);color:white;padding:1.15rem 1.25rem;border-radius:18px;box-shadow:0 14px 30px rgba(15,23,42,0.14);">
-            <div style="font-size:0.92rem;opacity:0.8;margin-bottom:0.55rem;">Top risk drivers for the selected prediction</div>
-            <ol style="margin:0;padding-left:1.2rem;line-height:1.7;">
-                {''.join(f'<li><strong>{item["risk_text"]}</strong> <span style="opacity:0.78;">({item["label"]}: {item["value_text"]})</span></li>' for item in contributions)}
-            </ol>
-            <div style="margin-top:0.75rem;font-size:0.82rem;opacity:0.75;">The list combines model feature importance with how this user compares to the dataset baseline.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.info("These are the main things that affected the prediction.")
+    for item in contributions:
+        st.write(f"- {item['risk_text']} ({item['label']}: {item['value_text']})")
+
+    st.caption("The list compares model feature importance with the user's values.")
 
 
 def render_global_model_importance(dataframe):
@@ -276,40 +279,17 @@ def render_per_user_prediction_card(filtered_df):
     prediction_frame = build_prediction_features(user_row)
     prediction, confidence = predict_single_user(model, user_row)
 
-    if prediction == "Severe":
-        accent = "#b91c1c"
-        summary = "This user is in the highest risk band and should be prioritized for intervention."
-    elif prediction == "High":
-        accent = "#ea580c"
-        summary = "This user shows a strong addiction risk signal and should be monitored closely."
-    elif prediction == "Moderate":
-        accent = "#d97706"
-        summary = "This user has a moderate risk profile with some warning signs present."
-    else:
-        accent = "#15803d"
-        summary = "This user currently appears to be in a lower risk band."
-
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, {accent}, #111827);color:white;padding:1.2rem 1.25rem;border-radius:18px;box-shadow:0 14px 30px rgba(15,23,42,0.14);">
-            <div style="font-size:0.92rem;opacity:0.82;margin-bottom:0.4rem;">Selected user</div>
-            <div style="font-size:1.55rem;font-weight:700;">{selected_record}</div>
-            <div style="margin-top:0.35rem;font-size:0.95rem;opacity:0.92;">Predicted risk level: <strong>{prediction}</strong></div>
-            <div style="font-size:0.95rem;opacity:0.92;">Model confidence: <strong>{confidence:.0%}</strong></div>
-            <div style="margin-top:0.7rem;font-size:0.95rem;line-height:1.55;">{summary}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.success(f"Predicted risk level: {prediction}")
+    st.write(f"Selected user: {selected_record}")
+    st.write(f"Model confidence: {confidence:.0%}")
+    st.write(_simple_user_summary(prediction))
 
     render_explainable_ai_panel(user_row, model, prediction_frame)
 
 
 def render_risk_predictions_tab(filtered_df):
     st.header("Risk Predictions")
-    st.caption(
-        "This tab is the AI-powered decision engine of the dashboard and summarizes how the model interprets user risk."
-    )
+    st.caption("This tab shows the model prediction for user risk and the main reasons behind it.")
 
     if len(filtered_df) == 0:
         st.warning("No users match the selected filters.")

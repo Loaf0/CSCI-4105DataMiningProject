@@ -147,7 +147,8 @@ def render_density_curves(dataframe, scores):
 
 
 def render_sleep_impact_section(dataframe, scores):
-    st.subheader("Sleep Impact Section")
+    st.subheader("Sleep Impact")
+    st.caption("These plots show how sleep connects with stress, anxiety, and disruption patterns.")
 
     left_col, middle_col, right_col = st.columns(3, gap="large")
 
@@ -211,27 +212,16 @@ def render_social_isolation_card(dataframe, scores):
     loneliness_pct = (scores["isolation"] >= 7).mean() * 100 if len(scores["isolation"]) else 0.0
     high_isolation_pct = (scores["isolation"] >= 8).mean() * 100 if len(scores["isolation"]) else 0.0
 
-    st.markdown("#### Social Isolation & Loneliness")
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, #111827, #1f2937);color:white;padding:1.1rem 1.2rem;border-radius:18px;box-shadow:0 14px 30px rgba(15,23,42,0.14);">
-            <div style="font-size:0.92rem;opacity:0.8;margin-bottom:0.5rem;">Isolation overview</div>
-            <div style="display:flex;gap:1rem;flex-wrap:wrap;">
-                <div style="flex:1;min-width:180px;background:rgba(255,255,255,0.06);padding:0.9rem;border-radius:14px;">
-                    <div style="font-size:0.84rem;opacity:0.8;">Users reporting loneliness</div>
-                    <div style="font-size:1.8rem;font-weight:700;">{loneliness_pct:.1f}%</div>
-                    <div style="font-size:0.82rem;opacity:0.85;">Proxy based on social isolation score of 7 or higher.</div>
-                </div>
-                <div style="flex:1;min-width:180px;background:rgba(255,255,255,0.06);padding:0.9rem;border-radius:14px;">
-                    <div style="font-size:0.84rem;opacity:0.8;">High isolation score users</div>
-                    <div style="font-size:1.8rem;font-weight:700;">{high_isolation_pct:.1f}%</div>
-                    <div style="font-size:0.82rem;opacity:0.85;">Users with social isolation score of 8 or higher.</div>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.subheader("Social Isolation")
+    left_col, right_col = st.columns(2)
+
+    with left_col:
+        st.metric("Users reporting loneliness", f"{loneliness_pct:.1f}%")
+        st.caption("This is based on social isolation score of 7 or higher.")
+
+    with right_col:
+        st.metric("High isolation users", f"{high_isolation_pct:.1f}%")
+        st.caption("This is based on social isolation score of 8 or higher.")
 
 
 def build_top_mental_health_issues(dataframe, scores):
@@ -311,18 +301,11 @@ def render_key_mental_health_insights_panel(dataframe, scores):
     insights = build_key_mental_health_insights(dataframe, scores)
 
     st.subheader("Key Mental Health Insights")
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, #0f172a, #1f2937);color:white;padding:1.1rem 1.2rem;border-radius:18px;box-shadow:0 14px 30px rgba(15,23,42,0.14);">
-            <div style="font-size:0.92rem;opacity:0.8;margin-bottom:0.55rem;">Auto-generated findings from the current filters</div>
-            <ul style="margin:0;padding-left:1.15rem;line-height:1.75;">
-                {''.join(f'<li>{insight}</li>' for insight in insights)}
-            </ul>
-            <div style="margin-top:0.75rem;font-size:0.82rem;opacity:0.75;">These findings translate the raw metrics into clear conclusions about sleep, distress, isolation, and mood balance.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.info("These notes are made from the current filter selection.")
+    for insight in insights:
+        st.write(f"- {insight}")
+
+    st.caption("The points below summarize sleep, distress, isolation, and mood balance.")
 
 
 def render_social_tab(filtered_df):
@@ -334,9 +317,7 @@ def render_social_tab(filtered_df):
 
     scores = build_social_scores(filtered_df)
 
-    st.caption(
-        "Mental health values are composite scores derived from the available sleep, mood, isolation, and disruption fields in the dataset."
-    )
+    st.caption("The scores below are simple composite values from sleep, mood, isolation, and disruption fields.")
 
     card1, card2, card3, card4, card5 = st.columns(5)
     card1.metric("Avg Stress Level", f"{scores['stress'].mean():.1f}/10")

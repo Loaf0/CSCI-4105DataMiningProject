@@ -68,20 +68,12 @@ def _severity_label(score, inverse=False):
 
 
 def _render_snapshot_card(title, value, level, accent):
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, {accent}, #111827);color:white;padding:1rem 1.05rem;border-radius:16px;box-shadow:0 12px 24px rgba(15,23,42,0.12);min-height:96px;">
-            <div style="font-size:0.82rem;opacity:0.8;margin-bottom:0.35rem;">{title}</div>
-            <div style="font-size:1.45rem;font-weight:800;line-height:1.1;">{value}</div>
-            <div style="margin-top:0.35rem;font-size:0.9rem;opacity:0.9;">{level}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.metric(title, value, level)
 
 
 def render_mental_health_snapshot(user_row):
     st.subheader("Mental Health Snapshot")
+    st.caption("These are simple scores based on the selected user's answers.")
 
     user_frame = user_row.to_frame().T
     scores = build_social_scores(user_frame)
@@ -126,24 +118,16 @@ def build_risk_flags(user_row, reference_df):
 
 
 def render_risk_flags_section(user_row, reference_df):
-    st.subheader("Risk Flags Section")
+    st.subheader("Risk Flags")
     flags = build_risk_flags(user_row, reference_df)
 
     if not flags:
         st.success("No major risk flags detected for the current selection.")
         return
 
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, #111827, #1f2937);color:white;padding:1rem 1.15rem;border-radius:16px;box-shadow:0 12px 24px rgba(15,23,42,0.12);">
-            <div style="font-size:0.92rem;opacity:0.8;margin-bottom:0.5rem;">Auto alerts</div>
-            <ul style="margin:0;padding-left:1.15rem;line-height:1.75;">
-                {''.join(f'<li>⚠ {flag}</li>' for flag in flags)}
-            </ul>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.info("Auto alerts")
+    for flag in flags:
+        st.write(f"- {flag}")
 
 
 def build_personalized_recommendations(user_row, prediction):
@@ -178,21 +162,13 @@ def render_personalized_recommendations(user_row, prediction):
     st.subheader("Personalized Recommendations")
     recommendations = build_personalized_recommendations(user_row, prediction)
 
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, #0f172a, #1f2937);color:white;padding:1rem 1.15rem;border-radius:16px;box-shadow:0 12px 24px rgba(15,23,42,0.12);">
-            <div style="font-size:0.92rem;opacity:0.8;margin-bottom:0.5rem;">Tailored suggestions based on the selected user's profile</div>
-            <ul style="margin:0;padding-left:1.1rem;line-height:1.75;">
-                {''.join(f'<li>{item}</li>' for item in recommendations)}
-            </ul>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.info("Tailored suggestions based on the selected user's profile")
+    for item in recommendations:
+        st.write(f"- {item}")
 
 
 def render_user_search_panel(dataframe):
-    st.subheader("User Search / Selection Panel")
+    st.subheader("User Search")
 
     search_col, risk_col, cluster_col = st.columns([1.6, 1, 1], gap="medium")
 
@@ -245,30 +221,20 @@ def render_user_search_panel(dataframe):
 
 
 def render_user_profile_card(user_row):
-    st.subheader("User Profile Card")
-
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, #111827, #1f2937);color:white;padding:1.15rem 1.25rem;border-radius:18px;box-shadow:0 14px 30px rgba(15,23,42,0.14);">
-            <div style="font-size:0.92rem;opacity:0.8;margin-bottom:0.55rem;">Basic user details</div>
-            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.7rem 1rem;">
-                <div><strong>User ID:</strong> {user_row['record_id']}</div>
-                <div><strong>Age:</strong> {_format_value(user_row['age'])}</div>
-                <div><strong>Gender:</strong> {_format_value(user_row['gender'])}</div>
-                <div><strong>Primary Platform:</strong> {_format_value(user_row['gaming_platform'])}</div>
-                <div><strong>Favorite Genre:</strong> {_format_value(user_row['game_genre'])}</div>
-                <div><strong>Years Gaming:</strong> {_format_value(user_row['years_gaming'])}</div>
-                <div><strong>Risk Level:</strong> {_format_value(user_row['gaming_addiction_risk_level'])}</div>
-                <div><strong>Cluster:</strong> {_format_value(user_row['cluster_label'])}</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.subheader("User Profile")
+    st.write(f"User ID: {_format_value(user_row['record_id'])}")
+    st.write(f"Age: {_format_value(user_row['age'])}")
+    st.write(f"Gender: {_format_value(user_row['gender'])}")
+    st.write(f"Primary Platform: {_format_value(user_row['gaming_platform'])}")
+    st.write(f"Favorite Genre: {_format_value(user_row['game_genre'])}")
+    st.write(f"Years Gaming: {_format_value(user_row['years_gaming'])}")
+    st.write(f"Risk Level: {_format_value(user_row['gaming_addiction_risk_level'])}")
+    st.write(f"Cluster: {_format_value(user_row['cluster_label'])}")
 
 
 def render_personal_behavior_metrics(user_row, reference_df):
     st.subheader("Personal Behavior Metrics")
+    st.caption("These values compare the selected user with the current filtered group.")
 
     daily_hours = float(pd.to_numeric(user_row["daily_gaming_hours"], errors="coerce"))
     sleep_hours = float(pd.to_numeric(user_row["sleep_hours"], errors="coerce"))
@@ -291,7 +257,7 @@ def render_personal_behavior_metrics(user_row, reference_df):
 
 
 def render_cluster_membership_card(user_row):
-    st.subheader("Cluster Membership Card")
+    st.subheader("Cluster Membership")
     cluster_label = str(user_row.get("cluster_label", "Unavailable"))
 
     if cluster_label == "Unavailable":
@@ -299,37 +265,21 @@ def render_cluster_membership_card(user_row):
     else:
         summary_text = _cluster_risk_segment(cluster_label, str(user_row.get("gaming_addiction_risk_level", "")).title())
 
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, #0f172a, #1f2937);color:white;padding:1.1rem 1.2rem;border-radius:18px;box-shadow:0 14px 30px rgba(15,23,42,0.14);">
-            <div style="font-size:0.92rem;opacity:0.8;margin-bottom:0.5rem;">Behavioral segment</div>
-            <div style="font-size:1.4rem;font-weight:700;margin-bottom:0.35rem;">{summary_text}</div>
-            <div style="font-size:0.95rem;opacity:0.9;">Assigned Cluster: <strong>{cluster_label}</strong></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.info(summary_text)
+    st.write(f"Assigned Cluster: {cluster_label}")
 
 
 def render_risk_prediction_card(user_row):
-    st.subheader("Risk Prediction Result")
+    st.subheader("Risk Prediction")
 
     model, _ = train_global_model()
     prediction_frame = build_prediction_features(user_row)
     prediction, confidence = predict_single_user(model, user_row)
     accent = _risk_color(prediction)
 
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, {accent}, #111827);color:white;padding:1.15rem 1.25rem;border-radius:18px;box-shadow:0 14px 30px rgba(15,23,42,0.14);">
-            <div style="font-size:0.92rem;opacity:0.82;margin-bottom:0.45rem;">AI-generated personal classification</div>
-            <div style="font-size:1.7rem;font-weight:800;letter-spacing:0.2px;">Prediction: {str(prediction).upper()} RISK</div>
-            <div style="margin-top:0.35rem;font-size:0.98rem;opacity:0.92;">Confidence: {confidence:.0%}</div>
-            <div style="margin-top:0.65rem;font-size:0.9rem;opacity:0.88;">Green = Low | Yellow = Moderate | Orange = High | Red = Severe</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"**Prediction:** <span style='color:{accent};'>{prediction}</span>", unsafe_allow_html=True)
+    st.write(f"Confidence: {confidence:.0%}")
+    st.caption("Green = Low, Yellow = Moderate, Orange = High, Red = Severe")
 
     return model, prediction_frame, prediction
 
@@ -338,19 +288,11 @@ def render_explainable_ai_panel(user_row, model, prediction_frame):
     st.subheader("Explainable AI Panel")
     contributions = build_user_explanation(user_row, model, prediction_frame)
 
-    st.markdown(
-        f"""
-        <div style="background:linear-gradient(135deg, #111827, #1f2937);color:white;padding:1.1rem 1.2rem;border-radius:18px;box-shadow:0 14px 30px rgba(15,23,42,0.14);">
-            <div style="font-size:0.92rem;opacity:0.8;margin-bottom:0.55rem;">Why the user received this prediction</div>
-            <div style="font-weight:700;margin-bottom:0.55rem;">Top Risk Drivers:</div>
-            <ol style="margin:0;padding-left:1.15rem;line-height:1.75;">
-                {''.join(f'<li>{item["risk_text"]}</li>' for item in contributions)}
-            </ol>
-            <div style="margin-top:0.75rem;font-size:0.82rem;opacity:0.75;">This combines feature importance with the selected user’s values compared against the dataset baseline.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.info("Why the user received this prediction")
+    for item in contributions:
+        st.write(f"- {item['risk_text']}")
+
+    st.caption("This combines feature importance with the selected user's values compared against the dataset baseline.")
 
 
 def render_user_explorer_tab(filtered_df):
